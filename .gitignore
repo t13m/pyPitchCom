@@ -3,6 +3,9 @@
 # C extensions
 *.so
 
+# ipython notebook
+*.ipynb
+
 # Packages
 *.egg
 *.egg-info
