@@ -91,6 +91,9 @@ def AutoCorr(dataMatrix):
     CORR_S = 16
     D = 2048
 
+    COEFF = np.linspace(float(2) - float(CORR_S)/float(CORR_N), 1, CORR_N - CORR_S + 1)
+    COEFF = np.append(np.zeros(15), COEFF)
+
     nSeq = dataMatrix.shape[1]
     nLength = dataMatrix.shape[0]
 
@@ -108,11 +111,23 @@ def AutoCorr(dataMatrix):
             for delta in range(CORR_N):
                 corr[i][delta] = windowedFrameBuffer.ravel().dot(dataMatrix[framePos + delta: framePos + FRAME_LEN + delta].ravel())
 
-            for delta in range(CORR_S, CORR_N):
-                if corr[i][delta] > 0:
-                    score[i][delta] = corr[i][delta] * (2 * CORR_N - delta) / CORR_N
-                else:
-                    pass
+            # Method 1: fast but has some difference with the original one
+            #
+            # score[i] = corr[i] * COEFF
+            # tmp = (corr[i]<0)
+            # score[i][tmp] = corr[i][tmp]
+
+            # Method 2: the original method, very slow.
+            #
+            # for delta in range(CORR_S, CORR_N):
+            #     if corr[i][delta] > 0:
+            #         score[i][delta] = corr[i][delta] * (2 * CORR_N - delta) / CORR_N
+            #     else:
+            #         pass
+
+    # Use no coeffs
+    score = corr
+
     return (corr, score)
 
 
@@ -168,7 +183,11 @@ if __name__ == "__main__":
     sig1 = EnergyNorm(sig0)
     corr,score = AutoCorr(sig1)
 
-    x, y = np.mgrid[:score.shape[0], :300]
+    x, y = np.mgrid[:score.shape[0], 1:301]
     fig, ax = pl.subplots()
-    ax.pcolormesh(x,y,score)
+    mesh = ax.pcolormesh(x,y,score)
+    pl.colorbar(mesh)
+    pl.xlabel("Time(nframe)")
+    pl.ylabel("Delta")
+    pl.title("ACF-gram")
     pl.show()
