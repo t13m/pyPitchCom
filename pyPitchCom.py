@@ -4,6 +4,7 @@ import sys
 import wave
 from math import sqrt
 import numpy as np
+
 def ReadWaveFile(filename):
     """
     Open wave file specified by filename and return data.
@@ -65,7 +66,7 @@ def EnergyNorm(dataMatrix):
 
     return newDataMatrix
             
-
+#@profile
 def AutoCorr(dataMatrix):
     """
     Compute auto-correlation function of one signal in dataMatrix
@@ -105,7 +106,7 @@ def AutoCorr(dataMatrix):
             windowedFrameBuffer = dataMatrix[framePos: framePos + FRAME_LEN, nthData].reshape(-1,1) * WINDOW
 
             for delta in range(CORR_N):
-                corr[i][delta] = np.sum(windowedFrameBuffer * dataMatrix[framePos + delta: framePos + FRAME_LEN + delta].reshape(-1,1))
+                corr[i][delta] = windowedFrameBuffer.ravel().dot(dataMatrix[framePos + delta: framePos + FRAME_LEN + delta].ravel())
 
             for delta in range(CORR_S, CORR_N):
                 if corr[i][delta] > 0:
@@ -154,7 +155,7 @@ def RandAdding(D, dataMatrix):
 
     # random value's range is [-1,1], a uniform distribution.
     data2Add = np.random.rand(D, nSeq) * 2 - 1
-    dataMatrix += (np.random.rand(D, nSeq) - 0.5) * 0.00001
+    dataMatrix += (np.random.rand(nLength, nSeq) - 0.5)* 0.0001
     return np.concatenate((data2Add, dataMatrix, data2Add), axis=0)
 
 if __name__ == "__main__":
@@ -164,7 +165,7 @@ if __name__ == "__main__":
     pprint(waveInfo)
 
     sig0 = RandAdding(2048, wave_data)
-    sig1 = ppc.EnergyNorm(sig0)
+    sig1 = EnergyNorm(sig0)
     corr,score = AutoCorr(sig1)
 
     x, y = np.mgrid[:score.shape[0], :300]
